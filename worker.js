@@ -1,11 +1,8 @@
-// Simple bot detection and IP checking Worker
-// This is a single-file approach for easier deployment
-
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
-    
+
     // Define bot patterns
     const botPatterns = [
       /bot/i, /crawler/i, /spider/i, /googlebot/i, /bingbot/i, /yandex/i,
@@ -19,67 +16,70 @@ export default {
       /ahrefsbot/i, /crawl/i, /wget/i, /curl/i, /HeadlessChrome/i,
       /Lighthouse/i, /Googlebot/i, /Mediapartners/i, /APIs-Google/i
     ];
-    
+
     // Common headers
     const headers = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Content-Type': 'application/json'
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Content-Type": "application/json"
     };
-    
-    // Handle OPTIONS
-    if (request.method === 'OPTIONS') {
+
+    // Handle OPTIONS (CORS preflight)
+    if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers });
     }
-    
+
     // Handle bot check
-    if (path.startsWith('/check-bot')) {
-      const userAgent = url.searchParams.get('useragent');
-      
+    if (path.startsWith("/check-bot")) {
+      const userAgent = url.searchParams.get("useragent");
+
       if (!userAgent) {
         return new Response(
-          JSON.stringify({ error: 'Missing useragent parameter' }), 
+          JSON.stringify({ error: "Missing useragent parameter" }),
           { status: 400, headers }
         );
       }
-      
+
       const isBot = botPatterns.some(pattern => pattern.test(userAgent));
-      
+
       return new Response(
         JSON.stringify({
-          'user-agent': userAgent,
-          'bot': isBot
+          "user-agent": userAgent,
+          "bot": isBot
         }, null, 2),
         { headers }
       );
     }
-    
-    // Handle IP check
-    if (path.startsWith('/check-ip')) {
-      const ip = url.searchParams.get('ip');
-      
+
+    // Handle IP check (Menggunakan API GeoIP dari Vercel)
+    if (path.startsWith("/check-ip")) {
+      let ip = url.searchParams.get("ip") || request.headers.get("CF-Connecting-IP");
+
       if (!ip) {
         return new Response(
-          JSON.stringify({ error: 'Missing ip parameter' }), 
+          JSON.stringify({ error: "IP address not found" }),
           { status: 400, headers }
         );
       }
-      
-      const country = request.cf && request.cf.country ? request.cf.country : 'unknown';
-      
-      return new Response(
-        JSON.stringify({
-          'ip': ip,
-          'country': country
-        }, null, 2),
-        { headers }
-      );
+
+      try {
+        // Fetch data dari API eksternal
+        const response = await fetch(`https://geoip-eta.vercel.app/check-ip?ip=${ip}`);
+        const data = await response.json();
+
+        return new Response(JSON.stringify(data, null, 2), { headers });
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch geoip data" }),
+          { status: 500, headers }
+        );
+      }
     }
-    
+
     // Handle unknown routes
     return new Response(
-      JSON.stringify({ error: 'Not Found' }), 
+      JSON.stringify({ error: "Not Found" }),
       { status: 404, headers }
     );
   }
