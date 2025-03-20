@@ -1,2 +1,2 @@
-name = "ip-bot-checker"
+name = "anjing"
 main = "worker.js"
