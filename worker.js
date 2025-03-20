@@ -54,7 +54,7 @@ export default {
 
     // Handle IP check (Menggunakan API GeoIP dari Vercel)
     if (path.startsWith("/check-ip")) {
-      let ip = url.searchParams.get("ip") || request.headers.get("CF-Connecting-IP");
+      let ip = url.searchParams.get("ip");
 
       if (!ip) {
         return new Response(
