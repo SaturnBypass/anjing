@@ -1,96 +1,150 @@
-const TelegramBot = require('telegram-bot-api');
-const dns = require('dns').promises;
-const { URL } = require('url'); // Import URL module for parsing
+// Cloudflare Worker for bot detection and IP geolocation
 
-// Your bot's token
-const api = new TelegramBot({
-  token: '8173034297:AAEMPqgabe68vbo3dCLk7tpmiMhd2COJUUY',
-});
+// List of common bot user agent patterns (including Facebook Ads)
+const BOT_PATTERNS = [
+  /bot/i,
+  /crawler/i,
+  /spider/i,
+  /googlebot/i,
+  /bingbot/i,
+  /yandex/i,
+  /baidu/i,
+  /slurp/i,
+  /duckduckgo/i,
+  /facebookexternalhit/i,
+  /facebookads/i,
+  /facebook-ads/i,
+  /fb_iab/i,
+  /fbclid/i,
+  /fb-messenger/i,
+  /twitterbot/i,
+  /rogerbot/i,
+  /linkedinbot/i,
+  /embedly/i,
+  /quora link preview/i,
+  /showyoubot/i,
+  /outbrain/i,
+  /pinterest/i,
+  /slackbot/i,
+  /vkshare/i,
+  /w3c_validator/i,
+  /whatsapp/i,
+  /flipboard/i,
+  /tumblr/i,
+  /bitlybot/i,
+  /skypeuripreview/i,
+  /nuzzel/i,
+  /discord/i,
+  /viber/i,
+  /telegram/i,
+  /applebot/i,
+  /whatsapp/i,
+  /semrushbot/i,
+  /pinterestbot/i,
+  /ahrefsbot/i,
+  /crawl/i,
+  /wget/i,
+  /curl/i,
+  /HeadlessChrome/i,
+  /Lighthouse/i,
+  /Googlebot/i,
+  /Mediapartners/i,
+  /APIs-Google/i
+];
 
-// Function to resolve domain to IP addresses
-async function getIP(domain) {
-  try {
-    const ipv4 = await dns.resolve4(domain).catch(() => []);
-    const ipv6 = await dns.resolve6(domain).catch(() => []);
-    return { ipv4, ipv6 };
-  } catch (error) {
-    return null; // Return null if resolution fails
-  }
+// Function to check if a user agent is a bot
+function isBot(userAgent) {
+  if (!userAgent) return false;
+  
+  return BOT_PATTERNS.some(pattern => pattern.test(userAgent));
 }
 
-// Extract domain from URL
-function extractDomain(input) {
-  try {
-    const url = new URL(input);
-    return url.host; // Return the hostname (e.g., "domain.com")
-  } catch (error) {
-    return input; // If not a valid URL, return the original input
+// Handler for the main worker
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request));
+});
+
+async function handleRequest(request) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+  
+  // Set CORS headers for all responses
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+  
+  // Handle OPTIONS request for CORS preflight
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers });
   }
+  
+  // Handle /check-bot endpoint
+  if (path.startsWith('/check-bot')) {
+    const params = url.searchParams;
+    const userAgent = params.get('useragent');
+    
+    if (!userAgent) {
+      return new Response(
+        JSON.stringify({ error: 'Missing useragent parameter' }), 
+        { status: 400, headers }
+      );
+    }
+    
+    const result = {
+      'user-agent': userAgent,
+      'bot': isBot(userAgent)
+    };
+    
+    return new Response(JSON.stringify(result, null, 2), { headers });
+  }
+  
+  // Handle /check-ip endpoint
+  if (path.startsWith('/check-ip')) {
+    const params = url.searchParams;
+    const ip = params.get('ip');
+    
+    if (!ip) {
+      return new Response(
+        JSON.stringify({ error: 'Missing ip parameter' }), 
+        { status: 400, headers }
+      );
+    }
+    
+    try {
+      // Use Cloudflare's built-in CF object to get country information
+      const country = request.cf && request.cf.country ? request.cf.country : 'unknown';
+      
+      // For the case where IP is provided in the query but we need to use CF's detection
+      let detectedCountry = country;
+      
+      // If the IP is not the same as the request IP, we need to make a separate lookup
+      const requestIP = request.headers.get('CF-Connecting-IP');
+      if (ip !== requestIP) {
+        // We can only get country for the current request IP using CF object
+        // For other IPs, we note that this is just the request country
+        detectedCountry = 'unknown';
+      }
+      
+      const result = {
+        'ip': ip,
+        'country': detectedCountry
+      };
+      
+      return new Response(JSON.stringify(result, null, 2), { headers });
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to process IP information', details: error.message }), 
+        { status: 500, headers }
+      );
+    }
+  }
+  
+  // Handle unknown routes
+  return new Response(
+    JSON.stringify({ error: 'Not Found' }), 
+    { status: 404, headers }
+  );
 }
-
-// Handle user messages
-api.on('message', async (message) => {
-  if (!message.text) return;
-
-  const text = message.text.trim();
-
-  // Handle /start command
-  if (text === '/start') {
-    api.sendMessage({
-      chat_id: message.chat.id,
-      text: `
-<b>Welcome to the Website to IP Bot!</b>
-Send a domain name or URL to retrieve its IPv4 and IPv6 addresses.
-
-Developer: <a href="https://t.me/febrykullbet">@febrykullbet</a>
-      `,
-      parse_mode: 'HTML',
-    });
-    return;
-  }
-
-  // Extract domain from input
-  const domain = extractDomain(text);
-
-  // Validate extracted domain
-  if (!/^[a-zA-Z0-9.-]+$/.test(domain)) {
-    return; // Ignore invalid domain input
-  }
-
-  const ipData = await getIP(domain);
-
-  if (ipData) {
-    const { ipv4, ipv6 } = ipData;
-
-    // If no IP addresses found, silently pass
-    if (ipv4.length === 0 && ipv6.length === 0) {
-      return; // Do nothing
-    }
-
-    // Prepare response
-    let response = '';
-
-    if (ipv6.length > 0) {
-      response += ipv6.map((ip) => `<code>${ip} ${domain}</code>`).join('\n');
-    }
-
-    if (ipv4.length > 0) {
-      response += (response ? '\n' : '') + ipv4.map((ip) => `<code>${ip} ${domain}</code>`).join('\n');
-    }
-
-    // Send response
-    api.sendMessage({
-      chat_id: message.chat.id,
-      text: response.trim()},
-      parse_mode: 'HTML',
-    });
-  }
-});
-
-// Handle errors
-api.on('error', (error) => {
-  console.log('An error occurred:', error);
-});
-
-// Start the bot
-console.log('Bot is running!');
