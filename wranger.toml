@@ -1,12 +1,2 @@
 name = "ip-bot-checker"
 main = "worker.js"
-compatibility_date = "2023-12-01"
-
-# Optional: If you want to deploy to a specific route
-# routes = [
-#   { pattern = "example.com/api/*", zone_name = "example.com" }
-# ]
-
-# Optional: Enable the Workers AI binding if you want to expand functionality later
-# [ai]
-# binding = "AI"
