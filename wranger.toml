@@ -1,5 +1,5 @@
 name = "ip-bot-checker"
-main = "index.js"
+main = "worker.js"
 compatibility_date = "2023-12-01"
 
 # Optional: If you want to deploy to a specific route
