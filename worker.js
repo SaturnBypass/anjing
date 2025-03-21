@@ -17,6 +17,15 @@ export default {
       /Lighthouse/i, /Googlebot/i, /Mediapartners/i, /APIs-Google/i
     ];
 
+    // Define device patterns
+    const mobilePatterns = [
+      /Android/i, /webOS/i, /iPhone/i, /iPad/i, /iPod/i, /BlackBerry/i,
+      /Windows Phone/i, /Mobile/i
+    ];
+    const desktopPatterns = [
+      /Windows NT/i, /Macintosh/i, /Linux/i, /Mac OS X/i
+    ];
+
     // Common headers
     const headers = {
       "Access-Control-Allow-Origin": "*",
@@ -52,9 +61,33 @@ export default {
       );
     }
 
+    // Handle device check
+    if (path.startsWith("/check-device")) {
+      const userAgent = url.searchParams.get("useragent");
+
+      if (!userAgent) {
+        return new Response(
+          JSON.stringify({ error: "Missing useragent parameter" }),
+          { status: 400, headers }
+        );
+      }
+
+      const isMobile = mobilePatterns.some(pattern => pattern.test(userAgent));
+      const isDesktop = desktopPatterns.some(pattern => pattern.test(userAgent));
+
+      return new Response(
+        JSON.stringify({
+          "user-agent": userAgent,
+          "mobile": isMobile,
+          "desktop": isDesktop
+        }, null, 2),
+        { headers }
+      );
+    }
+
     // Handle IP check (Menggunakan API GeoIP dari Vercel)
     if (path.startsWith("/check-ip")) {
-      let ip = url.searchParams.get("ip");
+      let ip = url.searchParams.get("ip") || request.headers.get("CF-Connecting-IP");
 
       if (!ip) {
         return new Response(
