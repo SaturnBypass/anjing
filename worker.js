@@ -5,17 +5,22 @@ export default {
 
     // Define bot patterns
     const botPatterns = [
-      /bot/i, /crawler/i, /spider/i, /googlebot/i, /bingbot/i, /yandex/i,
-      /baidu/i, /slurp/i, /duckduckgo/i, /facebookexternalhit/i,
-      /facebookads/i, /facebook-ads/i, /fb_iab/i, /fbclid/i, /fb-messenger/i,
-      /twitterbot/i, /rogerbot/i, /linkedinbot/i, /embedly/i,
-      /quora link preview/i, /showyoubot/i, /outbrain/i, /pinterest/i,
-      /slackbot/i, /vkshare/i, /w3c_validator/i, /whatsapp/i, /flipboard/i,
-      /tumblr/i, /bitlybot/i, /skypeuripreview/i, /nuzzel/i, /discord/i,
-      /viber/i, /telegram/i, /applebot/i, /semrushbot/i, /pinterestbot/i,
-      /ahrefsbot/i, /crawl/i, /wget/i, /curl/i, /HeadlessChrome/i,
-      /Lighthouse/i, /Googlebot/i, /Mediapartners/i, /APIs-Google/i
-    ];
+  /googlebot/i, // Pola untuk Googlebot
+  /google-site-verification/i, // Pola untuk Google-Site-Verification
+  /google-inspectiontool/i, // Pola untuk Google-InspectionTool
+  /googlebot-mobile/i, // Pola untuk Googlebot-Mobile
+  /googlebot-news/i, // Pola untuk Googlebot-News
+  /bot/i, /crawler/i, /spider/i, /bingbot/i, /yandex/i,
+  /baidu/i, /slurp/i, /duckduckgo/i, /facebookexternalhit/i,
+  /facebookads/i, /facebook-ads/i, /fb_iab/i, /fbclid/i, /fb-messenger/i,
+  /twitterbot/i, /rogerbot/i, /linkedinbot/i, /embedly/i,
+  /quora link preview/i, /showyoubot/i, /outbrain/i, /pinterest/i,
+  /slackbot/i, /vkshare/i, /w3c_validator/i, /whatsapp/i, /flipboard/i,
+  /tumblr/i, /bitlybot/i, /skypeuripreview/i, /nuzzel/i, /discord/i,
+  /viber/i, /telegram/i, /applebot/i, /semrushbot/i, /pinterestbot/i,
+  /ahrefsbot/i, /crawl/i, /wget/i, /curl/i, /HeadlessChrome/i,
+  /Lighthouse/i, /Mediapartners/i, /APIs-Google/i
+];
 
     // Define device patterns
     const mobilePatterns = [
@@ -50,7 +55,6 @@ export default {
         );
       }
 
-      // Check if the user agent matches any bot pattern
       const isBot = botPatterns.some(pattern => pattern.test(userAgent));
 
       return new Response(
@@ -73,7 +77,6 @@ export default {
         );
       }
 
-      // Check if the user agent is a mobile or desktop device
       const isMobile = mobilePatterns.some(pattern => pattern.test(userAgent));
       const isDesktop = desktopPatterns.some(pattern => pattern.test(userAgent));
 
@@ -94,14 +97,6 @@ export default {
       if (!ip) {
         return new Response(
           JSON.stringify({ error: "IP address not found" }),
-          { status: 400, headers }
-        );
-      }
-
-      // Validate IP address format
-      if (!/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip)) {
-        return new Response(
-          JSON.stringify({ error: "Invalid IP address format" }),
           { status: 400, headers }
         );
       }
