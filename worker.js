@@ -50,6 +50,7 @@ export default {
         );
       }
 
+      // Check if the user agent matches any bot pattern
       const isBot = botPatterns.some(pattern => pattern.test(userAgent));
 
       return new Response(
@@ -72,6 +73,7 @@ export default {
         );
       }
 
+      // Check if the user agent is a mobile or desktop device
       const isMobile = mobilePatterns.some(pattern => pattern.test(userAgent));
       const isDesktop = desktopPatterns.some(pattern => pattern.test(userAgent));
 
@@ -92,6 +94,14 @@ export default {
       if (!ip) {
         return new Response(
           JSON.stringify({ error: "IP address not found" }),
+          { status: 400, headers }
+        );
+      }
+
+      // Validate IP address format
+      if (!/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ip)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid IP address format" }),
           { status: 400, headers }
         );
       }
