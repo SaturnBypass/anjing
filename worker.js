@@ -24,12 +24,23 @@ export default {
 
     // Define device patterns
     const mobilePatterns = [
-      /Android/i, /webOS/i, /iPhone/i, /iPad/i, /iPod/i, /BlackBerry/i,
-      /Windows Phone/i, /Mobile/i
-    ];
+  /Android/i, /webOS/i, /iPhone/i, /iPad/i, /iPod/i, /BlackBerry/i,
+  /Windows Phone/i, /Mobile/i, /Opera Mini/i, /IEMobile/i, /Kindle/i,
+  /Silk/i, /Fennec/i, /Maemo/i, /MeeGo/i, /PlayBook/i, /BB10/i,
+  /Palm/i, /Nokia/i, /SamsungBrowser/i, /UCWEB/i, /UCBrowser/i,
+  /Obigo/i, /Blazer/i, /Dolphin/i, /Bada/i, /Tizen/i, /NetFront/i,
+  /Midori/i, /OneBrowser/i, /CoolPad/i, /Huawei/i, /Xiaomi/i,
+  /Vivo/i, /Oppo/i, /Realme/i, /Infinix/i, /Tecno/i, /Alcatel/i,
+  /ZTE/i, /Lenovo/i, /SonyEricsson/i, /Motorola/i
+];
+    
     const desktopPatterns = [
-      /Windows NT/i, /Macintosh/i, /Linux/i, /Mac OS X/i
-    ];
+  /Windows NT/i, /Macintosh/i, /Linux x86_64/i, /X11/i, /Ubuntu/i,
+  /Fedora/i, /Debian/i, /Red Hat/i, /FreeBSD/i, /OpenBSD/i,
+  /Mac OS X/i, /Chrome OS/i, /Intel Mac OS X/i, /Windows 98/i,
+  /Windows XP/i, /Windows Vista/i, /Windows 7/i, /Windows 8/i,
+  /Windows 10/i, /Windows 11/i, /CrOS/i
+];
 
     // Common headers
     const headers = {
